@@ -19,6 +19,40 @@ void setup() {
   pinMode(TRANSCEIVERALIM, OUTPUT);
 }
 
+int sendData(int temp, int hum)
+{
+  ack = 0;
+  //dummy bytes
+  Serial.write(169);
+  Serial.write(244);
+  Serial.write(190);
+  //humidity
+  Serial.write(hum);
+  //255 - humidity
+  Serial.write(255-hum);
+  //temperature + 25
+  //(temperature can be negative)
+  Serial.write(temp+25);
+  //230 - temperature
+  Serial.write(255-temp);
+  //for redunduncy, temperature + humidity
+  Serial.write(hum+temp);
+  //temperature + humidity - 255
+  Serial.write(hum+temp);
+  //dummy bytes
+  Serial.write(190);
+  Serial.write(244);
+  Serial.write(169);
+  delay(200);
+  if (Serial.available() > 0) {
+    ack=Serial.read();
+  }
+  else {
+    ack=0;
+  }
+  return ack;
+}
+
 void loop() {
   if (sleep_index >= 0)
   {
@@ -61,38 +95,4 @@ void loop() {
     sleep_index++;
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
   }
-}
-
-int sendData(int temp, int hum)
-{
-  ack = 0;
-  //dummy bytes
-  Serial.write(169);
-  Serial.write(244);
-  Serial.write(190);
-  //humidity
-  Serial.write(hum);
-  //255 - humidity
-  Serial.write(255-hum);
-  //temperature + 25
-  //(temperature can be negative)
-  Serial.write(temp+25);
-  //230 - temperature
-  Serial.write(255-temp);
-  //for redunduncy, temperature + humidity
-  Serial.write(hum+temp);
-  //temperature + humidity - 255
-  Serial.write(hum+temp);
-  //dummy bytes
-  Serial.write(190);
-  Serial.write(244);
-  Serial.write(169);
-  delay(200);
-  if (Serial.available() > 0) {
-    ack=Serial.read();
-  }
-  else {
-    ack=0;
-  }
-  return ack;
 }
