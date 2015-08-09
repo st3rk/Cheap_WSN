@@ -1,5 +1,6 @@
 #include <LowPower.h>
 #include <DHT.h>
+#include <math.h>
 
 
 #define DHTPIN 2
@@ -62,6 +63,8 @@ void loop() {
     byte t_b;
     h_b = (byte) h;
     t_b = (byte) t;
+		short retry = 0;
+		unsigned int wait_time;
   
     digitalWrite(DHTALIM, LOW);
   
@@ -69,9 +72,14 @@ void loop() {
       Serial.println("Failed to read from DHT sensor!");
     }
     else {
-      while (sendData(t_b, h_b) != mote_addr)
+      while ((sendData(t_b, h_b) != mote_addr) && (retry < 5))
       {
-        delay(50);
+        wait_time = random(2000 * pow(2, retry));
+				retry++;
+				Serial.print("Will wait ");
+				Serial.print(wait_time);
+				Serial.println("ms before resend.");
+        delay(wait_time);
       }
     }
     digitalWrite(TRANSCEIVERALIM, LOW);
