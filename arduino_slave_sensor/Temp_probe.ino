@@ -10,7 +10,6 @@
 DHT dht(DHTPIN, DHTTYPE);
 
 int sleep_index=0;
-int ack=0;
 
 void setup() {
   Serial.begin(9600);
@@ -21,28 +20,21 @@ void setup() {
 
 int sendData(int temp, int hum)
 {
-  ack = 0;
-  //dummy bytes
-  Serial.write(169);
-  Serial.write(244);
-  Serial.write(190);
-  //humidity
-  Serial.write(hum);
-  //255 - humidity
-  Serial.write(255-hum);
-  //temperature + 25
-  //(temperature can be negative)
-  Serial.write(temp+25);
-  //230 - temperature
-  Serial.write(255-temp);
-  //for redunduncy, temperature + humidity
-  Serial.write(hum+temp);
-  //temperature + humidity - 255
-  Serial.write(hum+temp);
-  //dummy bytes
-  Serial.write(190);
-  Serial.write(244);
-  Serial.write(169);
+	int send_temp, cs_temp, cs_hum, redund, cs_redund;
+  int ack = 0;
+	int dummy_byte1=169;
+	int dummy_byte2=244;
+	int dummy_byte3=190;
+
+	send_temp = temp + 25;
+	cs_temp = 255 - (temp + 25);
+	cs_hum = 255 - hum;
+	redund = hum + temp + 25;
+	cs_redund = 255 - (hum + temp + 25);
+
+	byte packet[] = {dummy_byte1, dummy_byte2, dummy_byte3, hum, cs_hum, send_temp, cs_temp, redund, cs_redund, dummy_byte3, dummy_byte2, dummy_byte1};
+  Serial.write(packet, 12);
+
   delay(200);
   if (Serial.available() > 0) {
     ack=Serial.read();
