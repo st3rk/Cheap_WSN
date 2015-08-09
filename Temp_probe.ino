@@ -1,7 +1,6 @@
+#include <LowPower.h>
 #include <DHT.h>
-#include <avr/sleep.h>
-#include <avr/power.h>
-#include <avr/wdt.h>
+
 
 #define DHTPIN 2
 #define DHTTYPE DHT11
@@ -10,8 +9,7 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
-int f_wdt=1;
-int sleep_count=0;
+int sleep_index=0;
 int ack=0;
 
 void setup() {
@@ -19,24 +17,10 @@ void setup() {
   dht.begin();
   pinMode(DHTALIM, OUTPUT);
   pinMode(TRANSCEIVERALIM, OUTPUT);
-  
-  /* Clear the reset flag. */
-  MCUSR &= ~(1<<WDRF);
-  
-  /* In order to change WDE or the prescaler, we need to
-   * set WDCE (This will allow updates for 4 clock cycles).
-   */
-  WDTCSR |= (1<<WDCE) | (1<<WDE);
-
-  /* set new watchdog timeout prescaler value */
-  WDTCSR = 1<<WDP0 | 1<<WDP3; /* 8.0 seconds */
-  
-  /* Enable the WD interrupt (note no reset). */
-  WDTCSR |= _BV(WDIE);
 }
 
 void loop() {
-  if((f_wdt == 1) && (sleep_count >= 0))
+  if (sleep_index >= 0)
   {
     
     Serial.println("UP!");
@@ -65,55 +49,18 @@ void loop() {
     }
     digitalWrite(TRANSCEIVERALIM, LOW);
 
-    /* Don't forget to clear the flag. */
-    f_wdt = 0;
-    
-    sleep_count = 0;
+    sleep_index = 0;
     
     /* Re-enter sleep mode. */
     Serial.println("go back to sleep");
     delay(50);
-    enterSleep();
-  }
-  else if(f_wdt == 1)
-  {
-    sleep_count++;
-    f_wdt = 0;
-    enterSleep();
+    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); 
   }
   else
   {
-    /* Do nothing. */
+    sleep_index++;
+    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
   }
-}
-
-ISR(WDT_vect)
-{
-  if(f_wdt == 0)
-  {
-    f_wdt=1;
-  }
-  else
-  {
-    Serial.println("WDT Overrun!!!");
-  }
-}
-
-void enterSleep(void)
-{
-  Serial.println("zzzzzz");
-  delay(50);
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);   /* EDIT: could also use SLEEP_MODE_PWR_DOWN for lowest power consumption. */
-  sleep_enable();
-  
-  /* Now enter sleep mode. */
-  sleep_mode();
-  
-  /* The program will continue from here after the WDT timeout*/
-  sleep_disable(); /* First thing to do is disable sleep. */
-  
-  /* Re-enable the peripherals. */
-  power_all_enable();
 }
 
 int sendData(int temp, int hum)
