@@ -10,6 +10,7 @@
 DHT dht(DHTPIN, DHTTYPE);
 
 int sleep_index=0;
+int mote_addr = 69;
 
 void setup() {
   Serial.begin(9600);
@@ -32,8 +33,8 @@ int sendData(int temp, int hum)
 	redund = hum + temp + 25;
 	cs_redund = 255 - (hum + temp + 25);
 
-	byte packet[] = {dummy_byte1, dummy_byte2, dummy_byte3, hum, cs_hum, send_temp, cs_temp, redund, cs_redund, dummy_byte3, dummy_byte2, dummy_byte1};
-  Serial.write(packet, 12);
+	byte packet[] = {dummy_byte1, dummy_byte2, dummy_byte3, mote_addr, hum, cs_hum, send_temp, cs_temp, redund, cs_redund, dummy_byte3, dummy_byte2, dummy_byte1};
+  Serial.write(packet, 13);
 
   delay(200);
   if (Serial.available() > 0) {
@@ -68,7 +69,7 @@ void loop() {
       Serial.println("Failed to read from DHT sensor!");
     }
     else {
-      while (sendData(t_b, h_b) != 69)
+      while (sendData(t_b, h_b) != mote_addr)
       {
         delay(50);
       }

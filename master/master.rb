@@ -11,7 +11,7 @@ parity = SerialPort::NONE
 
 dummy_start = [169, 244, 190]
 dummy_end = [190, 244, 169]
-window_size = 12
+window_size = 13
 
 sp = SerialPort.new(port_str, baud_rate, data_bits, stop_bits, parity)
 
@@ -31,33 +31,37 @@ loop do
 
 	if data_start.eql?(dummy_start) and data_end.eql?(dummy_end)
 		valid_data = true
-		if data_window[3] + data_window[4] == 254
-			humidity = data_window[3]
-			puts "humidity ok"
-		else
-			humidity = nil
-		end
-		if data_window[5] + data_window[6] == 255
-			temperature = data_window[5] - 25
-			puts "temp ok"
-		else
-			temperature = nil
-		end
-		if data_window[7] + data_window[8] == 255
-			puts "redund ok"
-			if temperature == nil and humidity != nil
-				puts "compute correct temp"
-				temperature = data_window[7] - humidity - 25
-			elsif temperature != nil and humidity == nil
-				puts "compute correct hum"
-				humidity = data_window[7] - temperature - 25
+		mote_addr = data_window[3]
+		# if mote address is 69, let's read humidity and temp
+		if mote_addr == 69
+			if data_window[4] + data_window[5] == 255
+				humidity = data_window[4]
+			else
+				humidity = nil
+				puts "Error in received humidity"
 			end
-		end
-		p data_window[7]
-		p data_window[8]
-		if temperature != nil and humidity != nil
-			sp.putc(69)
-			puts "température: #{temperature}°C, humidité: #{humidity}%"
+			if data_window[6] + data_window[7] == 255
+				temperature = data_window[6] - 25
+			else
+				temperature = nil
+				puts "Error in received temperature"
+			end
+			if data_window[8] + data_window[9] == 255
+				if temperature == nil and humidity != nil
+					puts "Compute correct temperature"
+					temperature = data_window[8] - humidity - 25
+				elsif temperature != nil and humidity == nil
+					puts "Error in received data, compute correct humidity"
+					humidity = data_window[8] - temperature - 25
+				end
+			end
+			# if data were correct, send an ACK and display the result
+			if temperature != nil and humidity != nil
+				sp.putc(mote_addr)
+				puts "température: #{temperature}°C, humidité: #{humidity}%"
+			else
+				puts "data corrupted, wait for mote to resend"
+			end
 		end
 	end
 end
