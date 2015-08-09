@@ -31,23 +31,30 @@ loop do
 
 	if data_start.eql?(dummy_start) and data_end.eql?(dummy_end)
 		valid_data = true
-		if data_window[3] + data_window[4] == 255
+		if data_window[3] + data_window[4] == 254
 			humidity = data_window[3]
+			puts "humidity ok"
 		else
 			humidity = nil
 		end
-		if data_window[5] + data_window[6] - 25 == 255
+		if data_window[5] + data_window[6] == 255
 			temperature = data_window[5] - 25
+			puts "temp ok"
 		else
 			temperature = nil
 		end
 		if data_window[7] + data_window[8] == 255
+			puts "redund ok"
 			if temperature == nil and humidity != nil
+				puts "compute correct temp"
 				temperature = data_window[7] - humidity - 25
-			elif temperature != nil and humidity == nil
-				humidity = data_window[7] - temperature + 25
+			elsif temperature != nil and humidity == nil
+				puts "compute correct hum"
+				humidity = data_window[7] - temperature - 25
 			end
 		end
+		p data_window[7]
+		p data_window[8]
 		if temperature != nil and humidity != nil
 			sp.putc(69)
 			puts "température: #{temperature}°C, humidité: #{humidity}%"
