@@ -4,10 +4,11 @@ A simple program to interconnect a master computer with a slave, arduino based, 
 
 ## The slave
 
-- Reads temperature and humidity from a DHT11 sensor.
-- Sends the dummy bytes (for synchronization) and data bytes by RF using a serial to 433MHz transceiver.
-- Waits for the ACK.
-- Sleeps (power-down mode) during 8 seconds.
+- Read temperature and humidity from a DHT11 sensor.
+- Send the dummy bytes (for synchronization) and data bytes by RF using a serial to 433MHz transceiver.
+- Wait for the ACK
+- Manage packet resend (with random backoff to avoid locking the medium)
+- Sleep (power-down mode) during 8 seconds for power efficiency.
 
 ## The master
 
